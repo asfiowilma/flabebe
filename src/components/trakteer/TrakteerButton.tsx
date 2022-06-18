@@ -13,7 +13,7 @@ const TrakteerButton = ({ className, size = 100 }: Props) => {
   const onButtonClick = () => {
     setIsLoading(true)
     setIsTrakteerOpen(true)
-    trakteerRef.current.contentWindow.postMessage({ type: 'embed.openModal' }, '*')
+    trakteerRef!.current!.contentWindow!.postMessage({ type: 'embed.openModal' }, '*')
   }
 
   return (

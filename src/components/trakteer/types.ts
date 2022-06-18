@@ -1,10 +1,10 @@
-import { MutableRefObject } from 'react'
+import { MutableRefObject } from "react";
 
 export interface TrakteerContextValue {
-  trakteerRef: MutableRefObject<HTMLIFrameElement>
-  isTrakteerOpen: boolean
-  setIsTrakteerOpen: (b: boolean) => void
-  isLoading: boolean
-  setIsLoading: (b: boolean) => void
+  trakteerRef: MutableRefObject<HTMLIFrameElement | null>;
+  isTrakteerOpen: boolean;
+  setIsTrakteerOpen: (b: boolean) => void;
+  isLoading: boolean;
+  setIsLoading: (b: boolean) => void;
 }
-export type TrakteerProviderProps = { children: React.ReactNode }
+export type TrakteerProviderProps = { children: React.ReactNode };
