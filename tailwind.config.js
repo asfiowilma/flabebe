@@ -9,5 +9,16 @@ module.exports = {
       },
     },
   },
-  plugins: [],
+  daisyui: {
+    themes: [
+      {
+        mytheme: {
+          "primary": "#dc8f8f",
+          "base-100": "#313131",
+          "neutral": "#4c3f3f",
+        },
+      },
+    ],
+  },
+  plugins: [require("daisyui")],
 };

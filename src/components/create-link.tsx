@@ -1,6 +1,5 @@
 import type { NextPage } from "next";
 import { useState } from "react";
-import classNames from "classnames";
 import { nanoid } from "nanoid";
 import debounce from "lodash/debounce";
 import { trpc } from "../../utils/trpc";
@@ -13,7 +12,7 @@ type Form = {
 
 const CreateLinkForm: NextPage = () => {
   const [form, setForm] = useState<Form>({ slug: "", url: "" });
-  const url = window.location.origin;
+  const url = window.location.host;
 
   const slugCheck = trpc.useQuery(["slugCheck", { slug: form.slug }], {
     refetchOnReconnect: false, // replacement for enable: false which isn't respected.
@@ -22,38 +21,32 @@ const CreateLinkForm: NextPage = () => {
   });
   const createSlug = trpc.useMutation(["createSlug"]);
 
-  const input =
-    "text-black my-1 p-2 bg-white border shadow-sm border-slate-300 placeholder-slate-400 focus:outline-none focus:border-pink-500 focus:ring-pink-500 block w-full rounded-md sm:text-sm focus:ring-1";
-
-  const slugInput = classNames(input, {
-    "border-red-500": slugCheck.isFetched && slugCheck.data!.used,
-    "text-red-500": slugCheck.isFetched && slugCheck.data!.used,
-  });
+  const isLoading = (form.slug && slugCheck.isLoading) || createSlug.isLoading
 
   if (createSlug.status === "success") {
     return (
-      <>
-        <div className="flex justify-center items-center">
-          <h1>{`${url}/${form.slug}`}</h1>
+      <div className="bg-base-300 p-6 rounded-box shadow-lg w-full max-w-screen-sm">
+        <div className="flex justify-center gap-2 items-center">
+          <div className="input flex-1 overflow-auto flex items-center font-medium text-lg">{`${url}/${form.slug}`}</div>
           <input
             type="button"
             value="Copy Link"
-            className="rounded bg-pink-500 py-1.5 px-1 font-bold cursor-pointer ml-2"
+            className="btn btn-primary"
             onClick={() => {
               copy(`${url}/${form.slug}`);
             }}
           />
+          <input
+            type="button"
+            value="go back"
+            className="btn"
+            onClick={() => {
+              createSlug.reset();
+              setForm({ slug: "", url: "" });
+            }}
+          />
         </div>
-        <input
-          type="button"
-          value="Reset"
-          className="rounded bg-pink-500 py-1.5 px-1 font-bold cursor-pointer m-5"
-          onClick={() => {
-            createSlug.reset();
-            setForm({ slug: "", url: "" });
-          }}
-        />
-      </>
+      </div>
     );
   }
 
@@ -63,15 +56,19 @@ const CreateLinkForm: NextPage = () => {
         e.preventDefault();
         createSlug.mutate({ ...form });
       }}
-      className="flex flex-col justify-center h-screen sm:w-2/3 md:w-1/2 lg:w-1/3"
+      className="flex flex-col gap-2 justify-center w-full sm:w-[500px] p-6 bg-base-300 rounded-box shadow-lg"
     >
-      {slugCheck.data?.used && (
-        <span className="font-medium mr-2 text-center text-red-500">
-          Slug already in use.
-        </span>
-      )}
       <div className="flex items-center">
-        <span className="font-medium mr-2">{url}/</span>
+        <input
+          type="url"
+          onChange={(e) => setForm({ ...form, url: e.target.value })}
+          placeholder="Enter your long url"
+          className="input w-full"
+          required
+        />
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="font-medium">{url}/</span>
         <input
           type="text"
           onChange={(e) => {
@@ -82,8 +79,8 @@ const CreateLinkForm: NextPage = () => {
             debounce(slugCheck.refetch, 100);
           }}
           minLength={1}
-          placeholder="rothaniel"
-          className={slugInput}
+          placeholder="slug"
+          className="input w-full flex-1"
           value={form.slug}
           pattern={"^[-a-zA-Z0-9]+$"}
           title="Only alphanumeric characters and hypens are allowed. No spaces."
@@ -92,7 +89,7 @@ const CreateLinkForm: NextPage = () => {
         <input
           type="button"
           value="Random"
-          className="rounded bg-pink-500 py-1.5 px-1 font-bold cursor-pointer ml-2"
+          className="btn hidden sm:inline-flex"
           onClick={() => {
             const slug = nanoid();
             setForm({
@@ -103,22 +100,32 @@ const CreateLinkForm: NextPage = () => {
           }}
         />
       </div>
-      <div className="flex items-center">
-        <span className="font-medium mr-2">Link</span>
+      <div className="flex gap-2">
         <input
-          type="url"
-          onChange={(e) => setForm({ ...form, url: e.target.value })}
-          placeholder="https://google.com"
-          className={input}
-          required
+          type="button"
+          value="Random"
+          className="btn inline-flex sm:hidden flex-none"
+          onClick={() => {
+            const slug = nanoid();
+            setForm({
+              ...form,
+              slug,
+            });
+            slugCheck.refetch();
+          }}
         />
+        <button
+          type="submit"
+          className={`btn btn-primary flex-1 ${isLoading && "loading"} `}
+          disabled={slugCheck.isFetched && slugCheck.data!.used}
+        >
+          {
+            form.slug && slugCheck.isLoading ? "checking availability" :
+              createSlug.isLoading ? "shortening your url.." :
+                slugCheck.data?.used ? "slug is unavailable 😢" : "shorten"
+          }
+        </button>
       </div>
-      <input
-        type="submit"
-        value="Create"
-        className="rounded bg-pink-500 p-1 font-bold cursor-pointer mt-1"
-        disabled={slugCheck.isFetched && slugCheck.data!.used}
-      />
     </form>
   );
 };
